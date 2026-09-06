@@ -51,8 +51,8 @@ export class SceneEnvironmentManager {
     // center orbit controls around mid-section area with target change
     this.controls = new OrbitControls(this.camera, this.renderer.domElement)
     this.controls.target.set(0, 0.9, 0)
-    this.controls.autoRotate = false
-    this.controls.autoRotateSpeed = this.turntable_speed
+    this.controls.autoRotate = this.turntable_speed > 0
+    this.controls.autoRotateSpeed = -this.turntable_speed
 
     // Set zoom limits to prevent excessive zooming in or out
     this.controls.minDistance = 0.5 // Minimum zoom (closest to model)

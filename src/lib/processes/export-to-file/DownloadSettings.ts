@@ -24,6 +24,8 @@ export enum FbxExportPreset {
 }
 
 export class DownloadSettings extends EventTarget {
+  private static readonly storage_key = 'mesh2motion-export-settings'
+
   private selected_bone_naming_structure: BoneNamingStructure = this.get_default_bone_naming_structure()
   private selected_export_contents: ExportContents = this.get_default_export_contents()
   private selected_export_format: ExportFormat = this.get_default_export_format()
@@ -41,8 +43,40 @@ export class DownloadSettings extends EventTarget {
   constructor () {
     super()
     this.initialize_dom_elements()
+    this.load_saved_settings()
     this.update_fbx_preset_ui_visibility()
     this.add_event_listeners()
+  }
+
+  private load_saved_settings (): void {
+    try {
+      const raw = localStorage.getItem(DownloadSettings.storage_key)
+      if (raw === null) { return }
+      const saved = JSON.parse(raw)
+      if (this.is_bone_naming_structure(saved.bone_naming_structure)) {
+        this.selected_bone_naming_structure = saved.bone_naming_structure
+      }
+      if (this.is_export_contents(saved.export_contents)) {
+        this.selected_export_contents = saved.export_contents
+      }
+      if (this.is_export_format(saved.export_format)) {
+        this.selected_export_format = saved.export_format
+      }
+      if (this.is_fbx_export_preset(saved.fbx_export_preset)) {
+        this.selected_fbx_export_preset = saved.fbx_export_preset
+      }
+    } catch (error) {
+      console.warn('Could not load saved export settings', error)
+    }
+  }
+
+  private save_settings (): void {
+    localStorage.setItem(DownloadSettings.storage_key, JSON.stringify({
+      bone_naming_structure: this.selected_bone_naming_structure,
+      export_contents: this.selected_export_contents,
+      export_format: this.selected_export_format,
+      fbx_export_preset: this.selected_fbx_export_preset
+    }))
   }
 
   public bone_naming_structure (): BoneNamingStructure {
@@ -65,17 +99,11 @@ export class DownloadSettings extends EventTarget {
   // options only apply to the human skeleton, so that section is shown/hidden here while
   // the export contents options remain available regardless of skeleton type.
   public update_download_settings_ui_visibility (skeleton_type: SkeletonType): void {
-    // reset to defaults
-    this.selected_bone_naming_structure = this.get_default_bone_naming_structure()
+    // re-apply the user's saved settings (or the defaults) to the radio groups
+    this.load_saved_settings()
     this.set_radio_group_value(this.dom_bone_naming_group, 'bone-naming-structure', this.selected_bone_naming_structure)
-
-    this.selected_export_contents = this.get_default_export_contents()
     this.set_radio_group_value(this.dom_export_contents_group, 'export-contents', this.selected_export_contents)
-
-    this.selected_export_format = this.get_default_export_format()
     this.set_radio_group_value(this.dom_export_format_group, 'export-format', this.selected_export_format)
-
-    this.selected_fbx_export_preset = this.get_default_fbx_export_preset()
     this.set_radio_group_value(this.dom_fbx_preset_group, 'fbx-export-preset', this.selected_fbx_export_preset)
 
     const is_human_skeleton = skeleton_type === SkeletonType.Human
@@ -139,6 +167,8 @@ export class DownloadSettings extends EventTarget {
         this.selected_bone_naming_structure = this.get_default_bone_naming_structure()
       }
 
+      this.save_settings()
+
       this.dispatchEvent(new CustomEvent('bone-naming-structure-changed', {
         detail: { boneNamingStructure: this.selected_bone_naming_structure }
       }))
@@ -157,6 +187,8 @@ export class DownloadSettings extends EventTarget {
         this.selected_export_contents = this.get_default_export_contents()
       }
 
+      this.save_settings()
+
       this.dispatchEvent(new CustomEvent('export-contents-changed', {
         detail: { exportContents: this.selected_export_contents }
       }))
@@ -174,6 +206,8 @@ export class DownloadSettings extends EventTarget {
       } else {
         this.selected_export_format = this.get_default_export_format()
       }
+
+      this.save_settings()
 
       this.dispatchEvent(new CustomEvent('export-format-changed', {
         detail: { exportFormat: this.selected_export_format }
@@ -194,6 +228,8 @@ export class DownloadSettings extends EventTarget {
       } else {
         this.selected_fbx_export_preset = this.get_default_fbx_export_preset()
       }
+
+      this.save_settings()
 
       this.dispatchEvent(new CustomEvent('fbx-export-preset-changed', {
         detail: { fbxExportPreset: this.selected_fbx_export_preset }

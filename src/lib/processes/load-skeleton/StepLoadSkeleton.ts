@@ -256,6 +256,36 @@ export class StepLoadSkeleton extends EventTarget {
     })
   }
 
+  // used by session restore to put the UI and internal state back the way the
+  // user had it before loading the skeleton file
+  public restore_skeleton_selection (skeleton_type: SkeletonType, hand_type: string, scale: number): void {
+    if (this.ui.dom_skeleton_drop_type !== null) {
+      if (this.has_select_skeleton_ui_option()) {
+        this.ui.dom_skeleton_drop_type.options.remove(0)
+      }
+      this.ui.dom_skeleton_drop_type.value = skeleton_type
+    }
+
+    if (this.ui.dom_hand_skeleton_selection !== null && hand_type !== '') {
+      this.ui.dom_hand_skeleton_selection.value = hand_type
+    }
+
+    this.manual_set_skeleton_type = skeleton_type
+    this.skeleton_scale_percentage = scale
+
+    if (this.ui.dom_scale_skeleton_input !== null) {
+      this.ui.dom_scale_skeleton_input.value = String(scale)
+    }
+    if (this.ui.dom_scale_skeleton_percentage_display !== null) {
+      this.ui.dom_scale_skeleton_percentage_display.textContent = Math.round(scale * 100).toString() + '%'
+    }
+    if (this.ui.dom_scale_skeleton_controls !== null) {
+      this.ui.dom_scale_skeleton_controls.style.display = 'flex'
+    }
+
+    this.toggle_ui_hand_skeleton_options()
+  }
+
   private has_select_skeleton_ui_option (): boolean {
     return this.ui.dom_skeleton_drop_type?.options[0].value === 'select-skeleton'
   }

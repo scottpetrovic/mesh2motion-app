@@ -3,6 +3,8 @@ import { DOMUtilities } from './DOMUtilities'
 import { type SceneEnvironmentManager } from './SceneEnvironmentManager'
 
 export class SettingsDropdownManager {
+  private static readonly storage_key = 'mesh2motion-scene-settings'
+
   private readonly ui: UI = UI.getInstance()
   private initialized: boolean = false
   private is_open: boolean = false
@@ -59,6 +61,51 @@ export class SettingsDropdownManager {
     this.initialize_turntable_speed_setting()
     this.initialize_floor_grid_setting()
     this.initialize_background_setting()
+    this.load_saved_settings()
+  }
+
+  private load_saved_settings (): void {
+    try {
+      const raw = localStorage.getItem(SettingsDropdownManager.storage_key)
+      if (raw === null) { return }
+      const saved = JSON.parse(raw)
+
+      if (typeof saved.light_intensity === 'number') {
+        this.scene_environment?.set_light_intensity_multiplier(saved.light_intensity)
+        if (this.ui.dom_light_intensity_input !== null) {
+          this.ui.dom_light_intensity_input.value = saved.light_intensity.toFixed(2)
+        }
+      }
+      if (typeof saved.turntable_speed === 'number') {
+        this.scene_environment?.set_turntable_speed(saved.turntable_speed)
+        if (this.ui.dom_turntable_speed_input !== null) {
+          this.ui.dom_turntable_speed_input.value = saved.turntable_speed.toFixed(1)
+        }
+      }
+      if (typeof saved.floor_grid === 'boolean') {
+        this.scene_environment?.set_floor_grid_visible(saved.floor_grid)
+        if (this.ui.dom_floor_grid_toggle !== null) {
+          this.ui.dom_floor_grid_toggle.checked = saved.floor_grid
+        }
+      }
+      if (typeof saved.solid_background === 'boolean') {
+        if (this.ui.dom_solid_background_toggle !== null) {
+          this.ui.dom_solid_background_toggle.checked = saved.solid_background
+        }
+        this.apply_solid_background(saved.solid_background)
+      }
+    } catch (error) {
+      console.warn('Could not load saved scene settings', error)
+    }
+  }
+
+  private save_settings (): void {
+    localStorage.setItem(SettingsDropdownManager.storage_key, JSON.stringify({
+      light_intensity: this.scene_environment?.get_light_intensity_multiplier() ?? 1.0,
+      turntable_speed: this.scene_environment?.get_turntable_speed() ?? 0,
+      floor_grid: this.ui.dom_floor_grid_toggle?.checked ?? true,
+      solid_background: this.ui.dom_solid_background_toggle?.checked ?? false
+    }))
   }
 
   private initialize_floor_grid_setting (): void {
@@ -73,6 +120,7 @@ export class SettingsDropdownManager {
 
     floor_grid_toggle.addEventListener('change', () => {
       this.scene_environment?.set_floor_grid_visible(floor_grid_toggle.checked)
+      this.save_settings()
     })
   }
 
@@ -88,6 +136,7 @@ export class SettingsDropdownManager {
 
     solid_background_toggle.addEventListener('change', () => {
       this.apply_solid_background(solid_background_toggle.checked)
+      this.save_settings()
     })
   }
 
@@ -114,6 +163,7 @@ export class SettingsDropdownManager {
       }
 
       this.scene_environment?.set_light_intensity_multiplier(slider_value)
+      this.save_settings()
     })
   }
 
@@ -136,6 +186,7 @@ export class SettingsDropdownManager {
       }
 
       this.scene_environment?.set_turntable_speed(slider_value)
+      this.save_settings()
     })
   }
 

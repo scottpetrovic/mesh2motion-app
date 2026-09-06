@@ -8,6 +8,7 @@ import { RetargetAnimationListing } from './RetargetAnimationListing.ts'
 import { AnimationRetargetService } from './AnimationRetargetService'
 import { type SkeletonType } from '../lib/enums/SkeletonType.ts'
 import { RetargetUtils } from './RetargetUtils.ts'
+import { RetargetSessionPersistence } from './RetargetSessionPersistence.ts'
 
 class RetargetModule {
   private readonly mesh2motion_engine: Mesh2MotionEngine
@@ -16,6 +17,7 @@ class RetargetModule {
   private readonly step_bone_mapping: StepBoneMapping
   private readonly retarget_animation_preview: RetargetAnimationPreview
   private animation_listing_step: RetargetAnimationListing | null = null
+  private readonly session_persistence: RetargetSessionPersistence
 
   private back_to_bone_map_button: HTMLButtonElement | null = null
   private continue_to_listing_button: HTMLButtonElement | null = null
@@ -43,6 +45,13 @@ class RetargetModule {
 
     // Initialize animation preview
     this.retarget_animation_preview = new RetargetAnimationPreview(this.step_bone_mapping)
+
+    this.session_persistence = new RetargetSessionPersistence(
+      this.mesh2motion_engine,
+      this.step_load_source_skeleton,
+      this.step_load_target_model,
+      this.step_bone_mapping
+    )
   }
 
   public init (): void {
@@ -51,6 +60,8 @@ class RetargetModule {
     this.step_load_target_model.begin()
     this.step_bone_mapping.begin()
     this.retarget_animation_preview.begin()
+    this.session_persistence.initialize()
+    void this.session_persistence.try_restore()
   }
 
   public add_event_listeners (): void {

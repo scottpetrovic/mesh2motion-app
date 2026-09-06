@@ -97,34 +97,39 @@ export class StepLoadTargetModel extends EventTarget {
         return
       }
 
-      // Configure the model loader to preserve all objects (bones, etc.)
-      this.mesh2motion_engine.load_model_step.set_preserve_skinned_mesh(true)
+      this.mesh2motion_engine.load_model_step.set_source_file_name(file.name)
 
-      // Create a URL for the file and load it
-      const file_url = URL.createObjectURL(file)
-
-      try {
-        this.mesh2motion_engine.load_model_step.load_model_file(file_url, file_extension)
-
-        this.mesh2motion_engine.load_model_step.addEventListener('modelLoadedForRetargeting', () => {
-          console.log('Model loaded for retargeting successfully.')
-          URL.revokeObjectURL(file_url) // Revoke the object URL after loading is complete
-
-          // read in mesh2motion engine's retargetable model data (this is the target)
-          const retargetable_meshes: Scene = this.mesh2motion_engine.load_model_step.get_final_retargetable_model_data()
-          const is_valid_skinned_mesh = RetargetUtils.validate_skinned_mesh_has_bones(retargetable_meshes)
-
-          if (is_valid_skinned_mesh) {
-            this.resolve_model_root_bones(retargetable_meshes).catch((error) => {
-              console.error('Error resolving multiple skeletons in model:', error)
-            })
-          }
-        }, { once: true })
-      } catch (error) {
-        console.error('Error loading model:', error)
-        new ModalDialog('Error loading model file.', 'Error').show()
-        URL.revokeObjectURL(file_url) // Clean up the URL
+      const reader = new FileReader()
+      reader.readAsDataURL(file)
+      reader.onload = () => {
+        this.load_target_model_from_data(reader.result, file_extension)
       }
+    }
+  }
+
+  public load_target_model_from_data (data: string | ArrayBuffer | null, file_extension: string): void {
+    // Configure the model loader to preserve all objects (bones, etc.)
+    this.mesh2motion_engine.load_model_step.set_preserve_skinned_mesh(true)
+
+    try {
+      this.mesh2motion_engine.load_model_step.load_model_file(data, file_extension)
+
+      this.mesh2motion_engine.load_model_step.addEventListener('modelLoadedForRetargeting', () => {
+        console.log('Model loaded for retargeting successfully.')
+
+        // read in mesh2motion engine's retargetable model data (this is the target)
+        const retargetable_meshes: Scene = this.mesh2motion_engine.load_model_step.get_final_retargetable_model_data()
+        const is_valid_skinned_mesh = RetargetUtils.validate_skinned_mesh_has_bones(retargetable_meshes)
+
+        if (is_valid_skinned_mesh) {
+          this.resolve_model_root_bones(retargetable_meshes).catch((error) => {
+            console.error('Error resolving multiple skeletons in model:', error)
+          })
+        }
+      }, { once: true })
+    } catch (error) {
+      console.error('Error loading model:', error)
+      new ModalDialog('Error loading model file.', 'Error').show()
     }
   }
 

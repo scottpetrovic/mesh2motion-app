@@ -1,5 +1,5 @@
 import {
-  Vector3, Vector2, type Object3D, Mesh, Group, Bone, type Skeleton, Euler, Raycaster,
+  Vector3, Vector2, type Object3D, Mesh, Group, Bone, type Skeleton, Raycaster,
   type PerspectiveCamera, type Scene, type Object3DEventMap, type BufferAttribute, type BufferGeometry, type InterleavedBufferAttribute
 } from 'three'
 import BoneTransformState from './interfaces/BoneTransformState'
@@ -213,12 +213,10 @@ export class Utility {
   static store_bone_transforms (skeleton: Skeleton): BoneTransformState[] {
     const bone_transforms: BoneTransformState[] = []
     skeleton.bones.forEach((bone: Bone) => {
-      const new_rotation: Vector3 = new Vector3().setFromEuler(bone.rotation)
-
       const new_transform_state = new BoneTransformState(
         bone.name,
         bone.position.clone(),
-        new_rotation,
+        bone.quaternion.clone(),
         bone.scale.clone()
       )
       bone_transforms.push(new_transform_state)
@@ -238,9 +236,7 @@ export class Utility {
 
       if (bone !== null) {
         bone.position.copy(bone_transform.position)
-        const euler: Euler = new Euler()
-        euler.setFromVector3(bone_transform.rotation)
-        bone.rotation.copy(euler)
+        bone.quaternion.copy(bone_transform.rotation)
         bone.scale.copy(bone_transform.scale)
       }
     })

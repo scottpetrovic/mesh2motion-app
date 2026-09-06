@@ -2,6 +2,7 @@ import { UI } from '../../UI.ts'
 import { Generators } from '../../Generators.ts'
 import { Utility } from '../../Utilities.ts'
 import { UndoRedoSystem } from './UndoRedoSystem.ts'
+import type BoneTransformState from '../../interfaces/BoneTransformState.ts'
 import { PreviewPlaneManager } from './PreviewPlaneManager.ts'
 import { ArmPlaneManager } from './ArmPlaneManager.ts'
 import { ArmWeightCorrector } from '../../solvers/ArmWeightCorrector.ts'
@@ -568,6 +569,13 @@ export class StepEditSkeleton extends EventTarget {
   }
 
   // returning back to edit skeleton step later will call this to reset undo state
+  // used by session restore to put saved bone edits back onto a freshly
+  // loaded skeleton
+  public restore_bone_snapshot (snapshot: BoneTransformState[]): void {
+    Utility.restore_bone_transforms(this.threejs_skeleton, snapshot)
+    this.dispatchEvent(new CustomEvent('skeletonTransformed'))
+  }
+
   public clear_undo_history (): void {
     this.undo_redo_system.clear_history()
   }

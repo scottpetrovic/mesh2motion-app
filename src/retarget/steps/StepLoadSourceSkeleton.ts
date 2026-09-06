@@ -54,6 +54,17 @@ export class StepLoadSourceSkeleton extends EventTarget {
     this.dispatchEvent(new CustomEvent('skeleton-loading'))
   }
 
+  public restore_skeleton_selection (select_value: string): void {
+    if (this.skeleton_type_select === null) { return }
+    if (this.skeleton_type_select.value === select_value) { return }
+    this.skeleton_type_select.value = select_value
+    this.handle_skeleton_selection_change()
+  }
+
+  public current_skeleton_selection (): string {
+    return this.skeleton_type_select?.value ?? ''
+  }
+
   private add_event_listeners (): void {
     // Skeleton selection change listener
     this.skeleton_type_select?.addEventListener('change', () => {

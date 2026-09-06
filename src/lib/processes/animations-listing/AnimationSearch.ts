@@ -474,6 +474,29 @@ export class AnimationSearch extends EventTarget {
     this.dispatchEvent(this.custom_event)
   }
 
+  // used by session restore: re-check previously selected animations by name
+  public apply_export_selections_by_name (selections: Array<{ name: string, mirror_export_mode: AnimationMirrorExportMode }>): void {
+    const selection_by_name = new Map(selections.map(selection => [selection.name, selection]))
+
+    this.all_animations.forEach((animation) => {
+      const saved = selection_by_name.get(animation.name)
+      if (saved !== undefined) {
+        animation.isChecked = true
+        animation.mirror_export_mode = saved.mirror_export_mode ?? 'none'
+      }
+    })
+
+    this.render_filtered_animations(this.filter_input?.value.toLowerCase() ?? '')
+
+    this.custom_event = new CustomEvent('export-options-changed', {
+      detail: {
+        selectedAnimations: this.get_selected_animation_indices(),
+        exportAnimationCount: this.get_selected_export_animation_count()
+      }
+    })
+    this.dispatchEvent(this.custom_event)
+  }
+
   private update_all_checkboxes_in_ui (checked_state: boolean): void {
     if (this.animation_list_container === null) {
       return

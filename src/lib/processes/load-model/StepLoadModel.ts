@@ -30,6 +30,10 @@ export class StepLoadModel extends EventTarget {
   // file the user picked, only used for labeling the analysis report
   private source_file_name: string = 'Unknown file'
 
+  // kept so a session restore can re-feed the exact same input to load_model_file
+  private source_file_data: string | ArrayBuffer | null = null
+  private source_file_extension: string = ''
+
   // diagnostic snapshot of what the file contained vs. what import produced
   private import_analysis: ModelImportAnalysis | null = null
 
@@ -160,6 +164,18 @@ export class StepLoadModel extends EventTarget {
     }
   }
 
+  public model_source_data (): { data: string | ArrayBuffer | null, extension: string, file_name: string } {
+    return {
+      data: this.source_file_data,
+      extension: this.source_file_extension,
+      file_name: this.source_file_name
+    }
+  }
+
+  public set_source_file_name (name: string): void {
+    this.source_file_name = name
+  }
+
   public clear_loaded_model_data (): void {
     this.original_model_data = new Scene()
     this.final_mesh_data = new Scene()
@@ -201,6 +217,9 @@ export class StepLoadModel extends EventTarget {
   }
 
   public load_model_file (model_file_path: string | ArrayBuffer | null, file_extension: string): void {
+    this.source_file_data = model_file_path
+    this.source_file_extension = file_extension
+
     // only the FBX loader can flag this, so clear it here or a previous broken FBX
     // would keep forcing the fallback material onto every model loaded after it
     this.mesh_has_broken_material = false

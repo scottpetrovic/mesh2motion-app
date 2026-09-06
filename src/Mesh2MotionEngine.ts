@@ -40,6 +40,7 @@ import { CameraShake } from './lib/CameraShake.ts'
 import { DOMUtilities } from './lib/DOMUtilities.ts'
 import { PlatformManager } from './lib/PlatformManager.ts'
 import { NetworkStatusManager } from './lib/NetworkStatusManager.ts'
+import type { SessionPersistence } from './lib/persistence/SessionPersistence.ts'
 
 export class Mesh2MotionEngine {
   public readonly camera = Generators.create_camera()
@@ -68,6 +69,7 @@ export class Mesh2MotionEngine {
 
   // for looking at specific bones
   public process_step: ProcessStep = ProcessStep.LoadModel
+  public session_persistence: SessionPersistence | null = null
   public skeleton_helper: CustomSkeletonHelper | undefined = undefined
   public debugging_visual_object: Group = new Group()
 
@@ -460,6 +462,8 @@ export class Mesh2MotionEngine {
         this.skeleton_helper.hide() // hide skeleton helper in animations listing step
       }
     }
+
+    this.session_persistence?.handle_step_completed()
 
     return this.process_step
   } // end process_step_changed()
